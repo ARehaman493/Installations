@@ -1,0 +1,262 @@
+from master
+
+1)curl -fsSL https://get.docker.com -o get-docker.sh
+2)sh get-docker.sh
+3) sudo usermod -aG docker ubuntu
+4)exit
+5)relogin
+6)docker info
+7)cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+8)sudo systemctl enable docker
+9)sudo systemctl daemon-reload
+10)sudo systemctl restart docker
+
+# Run these commands as root
+###Install GO###
+sudo -i
+
+11)wget https://storage.googleapis.com/golang/getgo/installer_linux
+12)chmod +x ./installer_linux
+13)./installer_linux
+14)source ~/.bash_profile
+
+
+15)git clone https://github.com/Mirantis/cri-dockerd.git
+
+
+16)cd cri-dockerd
+17)mkdir bin
+18)go build -o bin/cri-dockerd
+19)mkdir -p /usr/local/bin
+20)install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+21)cp -a packaging/systemd/* /etc/systemd/system
+22)sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service 
+23)systemctl daemon-reload
+24)systemctl enable cri-docker.service
+
+25)systemctl enable --now cri-docker.socket
+
+
+26)usermod -aG docker ubuntu
+27)exit
+28)login as ubuntu user
+29)docker info
+
+
+
+
+
+as a ubuntu user execute the following to install kubeadm,kubelet,kubectl
+
+
+
+1)sudo apt-get update
+
+2)sudo apt-get install -y apt-transport-https ca-certificates curl
+3)sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+4)echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+5)sudo apt-get update
+6)sudo apt-get install -y kubelet kubeadm kubectl
+7)sudo apt-mark hold kubelet kubeadm kubectl
+8)sudo -i
+from root user to create cluster 
+
+
+9)kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/cri-dockerd.sock
+
+
+=========================================================
+after executing above command  output is as shown below
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+1)  mkdir -p $HOME/.kube
+2) sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+3)  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+don't execute this
+------------------------------------------------------------------------------------
+Alternatively, if you are the root user, you can run:
+
+
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+don't execute it from master 
+kubeadm join 172.31.11.247:6443 --token sa3g3o.458w2ni2suv7m90z \
+        --discovery-token-ca-cert-hash sha256:26ab57fe5deeb761132779426335737a036327ccf00c68c374400b71bb5cbc3b
+----------------------------------------------------------------------------------------------------------------------
+
+
+for network driver installation refer here
+
+https://github.com/flannel-io/flannel#flannel
+execute the following from master as a non root user
+
+after execution step 3 execute the following to create network
+
+4)kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+===============================================================
+
+from node1
+
+1)curl -fsSL https://get.docker.com -o get-docker.sh
+2)sh get-docker.sh
+3) sudo usermod -aG docker ubuntu
+4)exit
+5)relogin
+6)docker info
+7)cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+8)sudo systemctl enable docker
+9)sudo systemctl daemon-reload
+10)sudo systemctl restart docker
+
+# Run these commands as root
+###Install GO###
+sudo -i 
+11)wget https://storage.googleapis.com/golang/getgo/installer_linux
+12)chmod +x ./installer_linux
+13)./installer_linux
+14)source ~/.bash_profile
+15)git clone https://github.com/Mirantis/cri-dockerd.git
+
+
+16)cd cri-dockerd
+17)mkdir bin
+18)go build -o bin/cri-dockerd
+19)mkdir -p /usr/local/bin
+20)install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+21)cp -a packaging/systemd/* /etc/systemd/system
+22)sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service 
+23)systemctl daemon-reload
+24)systemctl enable cri-docker.service
+25)systemctl enable --now cri-docker.socket
+26)usermod -aG docker ubuntu
+27)exit
+28)login as ubuntu user
+29)docker info
+
+
+as a ubuntu user execute the following to install kubeadm,kubelet,kubectl
+
+
+
+1)sudo apt-get update
+2)sudo apt-get install -y apt-transport-https ca-certificates curl
+3)sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+4)echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+5)sudo apt-get update
+6)sudo apt-get install -y kubelet kubeadm kubectl
+7)sudo apt-mark hold kubelet kubeadm kubectl
+8)sudo -i
+
+execute the following as a root user to join the node to cluster
+
+kubeadm join 172.31.11.247:6443 --token sa3g3o.458w2ni2suv7m90z         --discovery-token-ca-cert-hash sha256:26ab57fe5deeb761132779426335737a036327ccf00c68c374400b71bb5cbc3b --cri-socket=unix:///var/run/cri-dockerd.sock
+
+===============================================================
+
+from node 2
+
+1)curl -fsSL https://get.docker.com -o get-docker.sh
+2)sh get-docker.sh
+3) sudo usermod -aG docker ubuntu
+4)exit
+5)relogin
+6)docker info
+7)cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+8)sudo systemctl enable docker
+9)sudo systemctl daemon-reload
+10)sudo systemctl restart docker
+
+# Run these commands as root
+###Install GO###
+sudo -i
+11)wget https://storage.googleapis.com/golang/getgo/installer_linux
+12)chmod +x ./installer_linux
+13)./installer_linux
+14)source ~/.bash_profile
+15)git clone https://github.com/Mirantis/cri-dockerd.git
+
+
+16)cd cri-dockerd
+17)mkdir bin
+18)go build -o bin/cri-dockerd
+19)mkdir -p /usr/local/bin
+20)install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+21)cp -a packaging/systemd/* /etc/systemd/system
+22)sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service 
+23)systemctl daemon-reload
+24)systemctl enable cri-docker.service
+25)systemctl enable --now cri-docker.socket
+26)usermod -aG docker ubuntu
+27)exit
+28)login as ubuntu user
+29)docker info
+
+
+as a ubuntu user execute the following to install kubelet,kubeadm,kubectl
+
+
+
+1)sudo apt-get update
+2)sudo apt-get install -y apt-transport-https ca-certificates curl
+3)sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+4)echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+5)sudo apt-get update
+6)sudo apt-get install -y kubelet kubeadm kubectl
+7)sudo apt-mark hold kubelet kubeadm kubectl
+8)sudo -i
+
+kubeadm join 172.31.11.247:6443 --token sa3g3o.458w2ni2suv7m90z         --discovery-token-ca-cert-hash sha256:26ab57fe5deeb761132779426335737a036327ccf00c68c374400b71bb5cbc3b --cri-socket=unix:///var/run/cri-dockerd.sock
+
+========================================================================
+
+from master node execute the following commands to see whether setup is successful
+
+kubectl get nodes
+kubectl get pods --all-namespaces
+
+all pods must be running state then installation is successful
+
+
+
